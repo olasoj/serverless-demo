@@ -1,0 +1,53 @@
+service: simple-aws-lambda
+
+provider:
+  name: aws
+  runtime: java11
+  profile: serverlessUser
+  region: eu-north-1
+  timeout: 10
+  memorySize: 1024
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - 's3:*'
+      Resource:
+        - 'arn:aws:s3:::${self:custom.myBucket}/*'
+        - !Join [ '', [ 'arn:aws:s3:::', !Ref ServerlessDeploymentBucket, '/*' ] ]
+
+
+package:
+  artifact: app/build/distributions/app.zip
+
+custom:
+  tableName: Address
+  myBucket: lambda-test-bucket-12-07-2023
+
+functions:
+  S3Handler:
+    handler: com.aws.lambda.S3Handler
+    events:
+      - s3:
+          bucket: lambda-test-bucket-12-07-2023
+          event: s3:ObjectCreated:PUT
+          rules:
+            - suffix: .csv
+
+  DestinationLambda:
+    handler: com.aws.lambda.DestinationLambda
+
+resources:
+  Resources:
+    MyDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: ID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+
