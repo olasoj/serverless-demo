@@ -5,22 +5,28 @@ Resources:
   bucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
-  function:
+
+  MyDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Address
+      AttributeDefinitions:
+        - AttributeName: AddressId
+          AttributeType: N
+      KeySchema:
+        - AttributeName: ID
+          KeyType: HASH
+
+  S3Handler:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: build/distributions/app.zip
+      CodeUri: app/build/distributions/app.zip
       Handler: com.aws.lambda.S3Handler
       Runtime: java11
       Description: Java function
+      Role: arn:aws:iam::607695928816:role/Lambda-S3-Event
       MemorySize: 512
       Timeout: 30
-      # Function's execution role
-      Policies:
-        - AWSLambdaBasicExecutionRole
-        - AWSLambda_ReadOnlyAccess
-        - AWSXrayWriteOnlyAccess
-        - AWSLambdaVPCAccessExecutionRole
-        - AmazonS3FullAccess
       Tracing: Active
       Layers:
         - !Ref libs
@@ -35,6 +41,21 @@ Resources:
                 Rules:
                 - Name: suffix
                   Value: .csv
+
+  DestinationLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: app/build/distributions/app.zip
+      Handler: com.aws.lambda.DestinationLambda
+      Runtime: java11
+      Description: Java function
+      Role: arn:aws:iam::607695928816:role/lambda-dynamodb-read-access
+      MemorySize: 512
+      Timeout: 30
+      Tracing: Active
+      Layers:
+        - !Ref libs
+
   libs:
     Type: AWS::Serverless::LayerVersion
     Properties:
