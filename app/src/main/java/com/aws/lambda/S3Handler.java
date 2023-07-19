@@ -12,6 +12,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.S3Event;
 import com.amazonaws.services.lambda.runtime.events.models.s3.S3EventNotification;
 import com.amazonaws.services.lambda.runtime.events.models.s3.S3EventNotification.S3EventNotificationRecord;
+import com.aws.lambda.exception.S3LambdaException;
 import com.aws.lambda.model.Address;
 import com.aws.lambda.model.Response;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,7 +26,6 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,7 +37,7 @@ import static com.aws.lambda.JacksonConfig.objectMapper;
 public class S3Handler implements RequestHandler<S3Event, Response> {
 
     private static final String DYNAMO_ARN = "arn:aws:lambda:eu-north-1:607695928816:function:LambdaDynamoDBInsertHandler";
-    private static final String DYNAMO_FUNC_NAME = "LambdaDynamoDBInsertHandler";
+    private static final String DYNAMO_FUNC_NAME = "DynamoDBInsertionHandler";
     private static final S3Client s3Client = S3Client.builder()
             .region(Region.EU_NORTH_1)
             .credentialsProvider(DefaultCredentialsProvider.create())
@@ -78,28 +78,24 @@ public class S3Handler implements RequestHandler<S3Event, Response> {
             }
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new S3LambdaException(e);
         }
 
         Response response = new Response(addresses);
 
         String prettyString;
-        ByteBuffer buffer;
 
         try {
             prettyString = objectMapper.writeValueAsString(response);
-            byte[] bytes = objectMapper.writeValueAsBytes(response);
-            buffer = ByteBuffer.wrap(bytes);
             logger.log("Response as bytes:" + prettyString);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new S3LambdaException(e);
         }
 
         InvokeRequest request = new InvokeRequest()
                 .withFunctionName(DYNAMO_FUNC_NAME)
                 .withInvocationType(InvocationType.RequestResponse)
                 .withLogType(LogType.Tail)
-//                .withClientContext("S3Handler")
                 .withPayload(prettyString);
 
         InvokeResult invokeResult = client.invoke(request);
@@ -131,7 +127,7 @@ public class S3Handler implements RequestHandler<S3Event, Response> {
                     })
                     .collect(Collectors.toList());
         } catch (IOException ioException) {
-            throw new RuntimeException(ioException);
+            throw new S3LambdaException(ioException);
         }
     }
 

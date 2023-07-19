@@ -9,6 +9,7 @@ import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import com.aws.lambda.exception.DynamoDBLambdaException;
 import com.aws.lambda.model.Address;
 import com.aws.lambda.model.Response;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,7 +25,7 @@ public class DestinationLambda implements RequestStreamHandler {
 
     private static final AmazonDynamoDB ddb = AmazonDynamoDBClientBuilder.defaultClient();
     private static final DynamoDB dynamoDB = new DynamoDB(ddb);
-    private static final String TABLE_NAME = "Address";
+    private static final String TABLE_NAME = "Address-1689763516";
 
 
     public Void handleRequest(Response input, Context context) {
@@ -80,7 +81,7 @@ public class DestinationLambda implements RequestStreamHandler {
                 addresses.add(address);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new DynamoDBLambdaException(e);
         }
 
         return addresses;
