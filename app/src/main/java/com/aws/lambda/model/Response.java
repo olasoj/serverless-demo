@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -16,13 +15,20 @@ public class Response implements Serializable {
     @JsonProperty("addressList")
     private List<Address> addressList;
 
+    public Response() {
+    }
+
     @JsonCreator
     public Response(List<Address> addressList) {
         this.addressList = addressList;
     }
 
-    public Collection<Address> getAddressList() {
+    public List<Address> getAddressList() {
         return addressList;
+    }
+
+    public void setAddressList(List<Address> addressList) {
+        this.addressList = addressList;
     }
 
     @Override

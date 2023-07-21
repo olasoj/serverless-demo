@@ -16,14 +16,8 @@ Start-up the project
  ./start-up.sh
 ```
 
-Update the project
-
-```bash
-  cd simple-banking-app
-```
-
 Clean-up the project
 
 ```bash
-    mvn spring-boot:run
+    ./clean-up.sh
 ```

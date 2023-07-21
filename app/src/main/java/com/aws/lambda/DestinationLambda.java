@@ -6,60 +6,60 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
-import com.aws.lambda.exception.DynamoDBLambdaException;
 import com.aws.lambda.model.Address;
 import com.aws.lambda.model.Response;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.text.MessageFormat;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class DestinationLambda implements RequestStreamHandler {
+public class DestinationLambda {
+
+    private static final Logger LOGGER = Logger.getLogger(DestinationLambda.class.getSimpleName());
 
     private static final AmazonDynamoDB ddb = AmazonDynamoDBClientBuilder.defaultClient();
     private static final DynamoDB dynamoDB = new DynamoDB(ddb);
     private static final String TABLE_NAME = "Address-1689763516";
 
 
-    public Void handleRequest(Response input, Context context) {
+    public void handler(Response input) {
 
         if (input == null) throw new IllegalStateException("Invalid state: No address");
-        if (context == null) throw new IllegalStateException("Invalid state: No context");
 
-        LambdaLogger logger = context.getLogger();
-        if (logger == null) throw new IllegalStateException("Invalid state: No logger");
-
-        logger.log("Starting  operation: ");
+        LOGGER.info("Starting  operation: ");
 
         Table table = dynamoDB.getTable(TABLE_NAME);
 
-        logger.log(input.toString());
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, String.valueOf(input.toString()));
+        }
+
         Collection<Address> addresses = Objects.isNull(input.getAddressList()) ? Collections.emptyList() : input.getAddressList();
 
         try {
 
             for (Address address : addresses) {
-                insertIntoDynamoDB(logger, table, address);
-
+                insertIntoDynamoDB(table, address);
             }
+
         } catch (AmazonServiceException e) {
-            logger.log(e.getMessage());
+            LOGGER.info(e.getMessage());
         }
 
-        logger.log("Ending  operation: ");
-        return null;
+        LOGGER.info("Ending  operation: ");
     }
 
-    private void insertIntoDynamoDB(LambdaLogger logger, Table table, Address address) {
-        logger.log("Inserting  address: " + address);
+    private void insertIntoDynamoDB(Table table, Address address) {
 
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, MessageFormat.format("Inserting  address: {0}", address));
+        }
+
+        //TODO Replace with bulk upload
         Item item = new Item()
                 .withPrimaryKey("AddressId", Instant.now().toEpochMilli() + Math.random())
                 .withString("StreetName", Objects.toString(address.getStreetName(), ""))
@@ -67,40 +67,11 @@ public class DestinationLambda implements RequestStreamHandler {
                 .withString("State", Objects.toString(address.getState(), ""))
                 .withString("Country", Objects.toString(address.getCountry(), ""));
         table.putItem(item);
-        logger.log("Inserting  item: " + item);
-    }
 
-    private List<Address> toAddresses(byte[] input) {
-        List<Address> addresses = new LinkedList<>();
-
-        try {
-            ArrayNode jsonNodes = JacksonConfig.objectMapper.readValue(input, ArrayNode.class);
-
-            for (JsonNode jsonNode : jsonNodes) {
-                Address address = JacksonConfig.objectMapper.convertValue(jsonNode, Address.class);
-                addresses.add(address);
-            }
-        } catch (IOException e) {
-            throw new DynamoDBLambdaException(e);
-        }
-
-        return addresses;
-    }
-
-    @Override
-    public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
-
-        try {
-            if (input == null) throw new IllegalStateException("Invalid state: No address");
-            if (context == null) throw new IllegalStateException("Invalid state: No context");
-
-            Response response = JacksonConfig.objectMapper.readValue(input, Response.class);
-            handleRequest(response, context);
-
-        } finally {
-            if (input != null) input.close();
-            if (output != null) output.close();
+        if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO, MessageFormat.format("Inserting  item: {0}", item));
         }
     }
+
 }
 

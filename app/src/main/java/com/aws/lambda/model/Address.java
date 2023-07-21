@@ -3,7 +3,6 @@ package com.aws.lambda.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -11,7 +10,7 @@ import java.util.StringJoiner;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 //@JsonDeserialize(using = AddressJsonDeserializer.class)
-@JsonSerialize(using = AddressJsonSerializer.class)
+//@JsonSerialize(using = AddressJsonSerializer.class)
 public class Address implements Serializable {
 
     @JsonProperty("streetName")
@@ -60,16 +59,32 @@ public class Address implements Serializable {
         return streetName;
     }
 
+    public void setStreetName(String streetName) {
+        this.streetName = streetName;
+    }
+
     public String getCity() {
         return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
     }
 
     public String getState() {
         return state;
     }
 
+    public void setState(String state) {
+        this.state = state;
+    }
+
     public String getCountry() {
         return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
     }
 
     @Override
@@ -101,7 +116,7 @@ public class Address implements Serializable {
                 .add("streetName='" + streetName + "'")
                 .add("city='" + city + "'")
                 .add("state='" + state + "'")
-                .add("postalCode='" + country + "'")
+                .add("country='" + country + "'")
                 .toString();
     }
 

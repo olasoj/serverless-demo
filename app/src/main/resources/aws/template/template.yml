@@ -51,7 +51,7 @@ Resources:
     Properties:
       FunctionName: DynamoDBInsertionHandler
       CodeUri: s3://lambda-test-bucket-12-07-2023/app.zip
-      Handler: com.aws.lambda.DestinationLambda
+      Handler: com.aws.lambda.DestinationLambda::handler
       Runtime: java11
       Description: Java function
       Role: arn:aws:iam::607695928816:role/lambda-dynamodb-read-access
